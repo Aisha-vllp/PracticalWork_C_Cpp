@@ -1,56 +1,68 @@
-﻿#include <windows.h>
-#include <iostream>
-#include <vector>
-#include <string>
+﻿#include <dos.h>
+#include <conio.h>
+#include <stdio.h>
 
-using namespace std;
+#define byte unsigned char
+#define word unsigned int
 
-// Функция для получения списка загруженных драйверов
-void listLoadedDrivers() {
-    DWORD bytesNeeded;
-    DWORD driverCount;
-    LPVOID driverInfo = NULL;
+struct DR_HEAD {
+    struct DR_HEAD* next;     /* адрес следующего */
+    word attr;                /* атрибуты */
+    word strat_off, intr_off; /* смещения секций */
+    char name[8];             /* имя */
+};
 
-    // Получаем количество загруженных драйверов
-    if (!EnumDeviceDrivers(NULL, 0, &bytesNeeded)) {
-        cout << "Ошибка при получении количества драйверов." << endl;
-        return;
-    }
+void clrbuf(void) {
+    while (kbhit()) getch();
+}
 
-    driverCount = bytesNeeded / sizeof(LPVOID);
-    driverInfo = new BYTE[bytesNeeded];
+byte GetSym(int x1, int y1) {
+    return peekb(0xb800, y1 * 160 + x1 * 2);
+}
 
-    // Получаем информацию о загруженных драйверах
-    if (!EnumDeviceDrivers(driverInfo, bytesNeeded, &bytesNeeded)) {
-        cout << "Ошибка при получении информации о драйверах." << endl;
-        delete[] driverInfo;
-        return;
-    }
+byte GetAtr(int x1, int y1) {
+    return peekb(0xb800, y1 * 160 + x1 * 2 + 1);
+}
 
-    // Выводим информацию о каждом драйвере
-    for (size_t i = 0; i < driverCount; i++) {
-        TCHAR driverName[MAX_PATH];
-        if (GetDeviceDriverBaseName((LPVOID)((LPBYTE)driverInfo + i * sizeof(LPVOID)), driverName, sizeof(driverName) / sizeof(TCHAR))) {
-            cout << "Драйвер " << i + 1 << ": " << driverName << endl;
-        }
-    }
+void PutSym(int x1, int y1, byte sym) {
+    pokeb(0xb800, y1 * 160 + x1 * 2, sym);
+}
 
-    delete[] driverInfo;
+void PutAtr(int x1, int y1, byte atr) {
+    pokeb(0xb800, y1 * 160 + x1 * 2 + 1, atr);
+}
+
+void FlDrv(struct DR_HEAD* drv) {
+    // Функция для отображения атрибутов драйвера
+    // Здесь можно добавить логику для отображения атрибутов
 }
 
 int main() {
     std::locale::global(std::locale(""));
     SetConsoleOutputCP(CP_UTF8); // Устанавливаем кодировку UTF-8
 
-    cout << "---------------" << endl;
-    cout << "             Список загруженных драйверов             " << endl;
-    cout << "---------------" << endl;
+    struct DR_HEAD* drv;
+    union REGS rr;
+    struct SREGS sr;
 
-    listLoadedDrivers();
+    // Получение адреса CVT
+    rr.h.ah = 0x52;
+    intdosx(&rr, &rr, &sr);
 
-    cout << "---------------" << endl;
-    cout << "Нажмите любую клавишу для выхода..." << endl;
-    cin.get();
+    // Получение адреса первого драйвера
+    drv = (struct DR_HEAD*)MK_FP(sr.es, rr.x.bx + 34);
 
+    clrscr();
+    cprintf("---------------\n");
+    cprintf("             Список драйверов             \n");
+    cprintf("---------------\n");
+
+    while (drv->next != (struct DR_HEAD*)0xFFFF) {
+        cprintf("Драйвер: %s, Атрибуты: %04X\n", drv->name, drv->attr);
+        drv = drv->next; // Переход к следующему драйверу
+    }
+
+    cprintf("Конец списка. Нажмите любую клавишу...\n");
+    getch();
     return 0;
 }
