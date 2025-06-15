@@ -52,7 +52,19 @@ void updateBall(Ball& ball) {
     drawBall(ball);
 }
 
+// Функция для скрытия курсора
+void hideCursor() {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_CURSOR_INFO cursorInfo;
+    GetConsoleCursorInfo(hConsole, &cursorInfo);
+    cursorInfo.bVisible = FALSE; // Скрыть курсор
+    SetConsoleCursorInfo(hConsole, &cursorInfo);
+}
+
 int main() {
+    // Скрываем курсор
+    hideCursor();
+
     // Инициализация мяча
     Ball ball;
     ball.x = WIDTH / 2;
