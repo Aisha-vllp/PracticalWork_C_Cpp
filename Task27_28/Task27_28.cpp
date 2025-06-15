@@ -5,6 +5,8 @@
 
 using namespace std;
 
+#pragma warning(disable : 4996)
+
 // Функция для получения версии Windows
 void getWindowsVersion() {
     OSVERSIONINFO osvi;
