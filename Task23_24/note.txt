@@ -1,0 +1,151 @@
+
+
+//#include <iostream>
+//#include <windows.h>
+//#include <conio.h>
+//
+//bool blockKey3 = false;
+//bool comboPreviouslyPressed = false;
+//
+//bool isComboPressed()
+//{
+//    return (GetAsyncKeyState(VK_LCONTROL) & 0x8000) &&
+//        (GetAsyncKeyState(VK_RSHIFT) & 0x8000) &&
+//        (GetAsyncKeyState(VK_F3) & 0x8000);
+//}
+//
+//int main()
+//{
+//    while (true)
+//    {
+//        bool comboNow = isComboPressed();
+//        if (comboNow && !comboPreviouslyPressed)
+//        {
+//            blockKey3 = !blockKey3;
+//            Beep(750, 300);
+//            std::cout << (blockKey3 ? "\nКлавиша '3' заблокирована\n" : "\nКлавиша '3' разблокирована\n");
+//        }
+//        comboPreviouslyPressed = comboNow;
+//
+//        if (_kbhit())
+//        {
+//            int ch = _getch();
+//            if (blockKey3 && ch == '3')
+//                continue;
+//            if (ch == 27) // Esc для выхода
+//                break;
+//            std::cout << static_cast<char>(ch);
+//            std::cout.flush();
+//
+//        }
+//        Sleep(30);
+//    }
+//    return 0;
+//}
+
+#include <dos.h>
+
+void interrupt(*old9)(); /* Старый обработчик прерывания 9h */
+void interrupt new9();    /* Новый обработчик прерывания 9h  */
+void* readvect(int in);   /* Чтение вектора                  */
+void writevect(int in, void* h); /* Запись вектора           */
+
+unsigned char F3_code = 61; /* scan-code "F3"                  */
+unsigned char key3_code = 4; /* scan-code "3"                   */
+char f = 0;                  /* Флаг                            */
+union REGS rr;
+struct SREGS sr;
+
+/*--------------------------------------------------------*/
+void main() {
+    char string[80]; /* Буфер для ввода текста */
+    textbackground(0);
+    clrscr();
+    textattr(0x0a);
+    cprintf("---------------");
+    cprintf("              Практическая работа               ");
+    cprintf("---------------");
+    cprintf("---------------");
+    cprintf("              Управление клавиатурой              ");
+    cprintf("---------------");
+
+    old9 = readvect(9);
+    writevect(9, new9);
+
+    textattr(0x0c);
+    cprintf("\n\n\r\"горячая\" комбинация: ");
+    textattr(0x0a);
+    cprintf("Left Shift, Right Ctrl, F3\n\r");
+    textattr(0x0b);
+    cprintf("Клавиша, которая блокируется: ");
+    textattr(0x0f);
+    cprintf("3");
+    textattr(0x07);
+    cprintf("\r\nВводите строку символов>");
+    scanf("%s", string);
+
+    writevect(9, old9);
+}
+
+/*--------------------------------------------------------*/
+/* Чтение вектора */
+void* readvect(int in) {
+    rr.h.ah = 0x35;
+    rr.h.al = in;
+    intdosx(&rr, &rr, &sr);
+    return (MK_FP(sr.es, rr.x.bx));
+}
+
+/*--------------------------------------------------------*/
+/* Запись вектора */
+void writevect(int in, void* h) {
+    rr.h.ah = 0x25;
+    rr.h.al = in;
+    sr.ds = FP_SEG(h);
+    rr.x.dx = FP_OFF(h);
+    intdosx(&rr, &rr, &sr);
+}
+
+/*--------------------------------------------------------*/
+/* Новый обработчик 9-го прерывания */
+void interrupt new9() {
+    unsigned char c, x, y;
+    unsigned char byte17, byte18;
+    unsigned char mask = 0x02;
+    unsigned char mask17 = 0x04;
+    unsigned char mask18 = 0x01;
+
+    byte17 = peekb(0x40, 0x17);
+    byte18 = peekb(0x40, 0x18);
+
+    if ((inportb(0x60) == F3_code) && (byte17 & mask) && (byte17 & mask17) && (!(byte18 & mask18))) {
+        cputs("\7");
+        x = wherex();
+        y = wherey();
+        gotoxy(55, 3);
+        textattr(0x1e);
+
+        if (f == 0) {
+            f = 1;
+            cprintf("Клавиша \"3\" заблокирована ");
+        }
+        else {
+            f = 0;
+            cprintf("Клавиша \"3\" разблокирована");
+        }
+
+        gotoxy(x, y);
+        textattr(0x07);
+        (*old9)();
+    }
+
+    if ((f == 1) && (inportb(0x60) == key3_code)) {
+        c = inportb(0x61);
+        outportb(0x61, c | 0x80);
+        outportb(0x61, c);
+        outportb(0x20, 0x20);
+    }
+    else {
+        (*old9)();
+    }
+}
