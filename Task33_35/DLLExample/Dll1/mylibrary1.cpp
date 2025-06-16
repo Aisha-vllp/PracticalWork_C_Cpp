@@ -15,4 +15,4 @@ extern "C" {
         dst << src.rdbuf();
     }
 }
-#include "pch.h" //useless & senseless. just for compiling (temp)
+#include "pch.h" //useless & meaningless. just for compiling (temp)
