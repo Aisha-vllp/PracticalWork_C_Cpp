@@ -1,5 +1,4 @@
 // MyLibrary2.cpp
-#include <stdafx.h>
 #include <iostream>
 #include <fstream>
 #include <windows.h>
