@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <windows.h>
+
 extern "C" {
     __declspec(dllexport) void CopyFileContent(const char* sourceFile, const char* destFile) {
         std::ifstream src(sourceFile, std::ios::binary);
@@ -14,3 +15,4 @@ extern "C" {
         dst << src.rdbuf();
     }
 }
+#include "pch.h" //useless & senseless. just for compiling (temp)

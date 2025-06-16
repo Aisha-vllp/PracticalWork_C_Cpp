@@ -3,6 +3,8 @@
 *.sln
 *.vcxproj
 .vs
+!Task33_35/DynamicLibrariesExample/Dll1/x64/Debug/*.dll
+!Task33_35/DynamicLibrariesExample/Dll2/x64/Debug/*.dll
 Debug
 build
 !*.c
