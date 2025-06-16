@@ -15,4 +15,5 @@ build
 !*.txt
 !*.md
 !*.cmake
+!*.exclude
 f

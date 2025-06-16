@@ -1,0 +1,35 @@
+﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
+//#include "pch.h"
+
+//BOOL APIENTRY DllMain( HMODULE hModule,
+//                       DWORD  ul_reason_for_call,
+//                       LPVOID lpReserved
+//                     )
+//{
+//    switch (ul_reason_for_call)
+//    {
+//    case DLL_PROCESS_ATTACH:
+//    case DLL_THREAD_ATTACH:
+//    case DLL_THREAD_DETACH:
+//    case DLL_PROCESS_DETACH:
+//        break;
+//    }
+//    return TRUE;
+
+
+// MyLibrary1.cpp
+#include <iostream>
+#include <fstream>
+#include <windows.h>
+extern "C" {
+    __declspec(dllexport) void CopyFileContent(const char* sourceFile, const char* destFile) {
+        std::ifstream src(sourceFile, std::ios::binary);
+        std::ofstream dst(destFile, std::ios::binary);
+        dst << src.rdbuf();
+    }
+    __declspec(dllexport) void AppendToFile(const char* sourceFile, const char* destFile) {
+        std::ifstream src(sourceFile, std::ios::binary);
+        std::ofstream dst(destFile, std::ios::app);
+        dst << src.rdbuf();
+    }
+}
